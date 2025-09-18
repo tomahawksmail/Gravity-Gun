@@ -6,8 +6,8 @@ const int buttonRight = 3;
 
 // LEDs
 const int blueLED = 5;
-const int group1LEDs[] = {4, 6, 7};
-const int group2LED = 9;
+const int group1LEDs[] = {4, 5, 6, 7, 8, 9};
+const int group2LED = 12;
 
 // Sound module JQ6500
 SoftwareSerial mp3(10, 11); // TX=10, RX=11
