@@ -10,12 +10,17 @@ const int buttonRight = 3;
 SoftwareSerial mySerial(10, 11);
 JQ6500_Serial mp3(mySerial);
 
-
 // LEDs
 const int blueLED = A3;
-const int group1LEDs[] = { 4, 5, 6, 7, 8, 9 };
+const int group1LEDs[] = {4, 5, 6, 7, 8, 9};
 const int RingLED = 12;
+const int numGroup1LEDs = sizeof(group1LEDs) / sizeof(group1LEDs[0]);
 
+// For blinking effect
+unsigned long previousMillis = 0;
+const long blinkInterval = 300;  // ms
+bool ledState = false;
+bool blinkActive = false;
 
 void setup() {
   mySerial.begin(9600);
@@ -27,46 +32,51 @@ void setup() {
 
   pinMode(blueLED, OUTPUT);
   pinMode(RingLED, OUTPUT);
-  pinMode(group1LEDs, OUTPUT);
 
-
+  for (int i = 0; i < numGroup1LEDs; i++) {
+    pinMode(group1LEDs[i], OUTPUT);
+  }
 }
 
 void loop() {
-  if (mp3.getStatus() != MP3_STATUS_PLAYING) {
+  if (digitalRead(buttonLeft) == LOW) {
+    LeftButton();
+  } else if (digitalRead(buttonRight) == LOW) {
+    RightButton();
+  } else {
+    StopAll();
+  }
 
-    if (digitalRead(buttonLeft) == LOW) {
-      LeftButton();
-    } else {
-
-      StopAll();  // Turn LED OFF
-    }
-
-
-
-    if (digitalRead(buttonRight) == LOW) {
-      RightButton();
+  // Handle blinking LEDs without blocking
+  if (blinkActive) {
+    unsigned long currentMillis = millis();
+    if (currentMillis - previousMillis >= blinkInterval) {
+      previousMillis = currentMillis;
+      ledState = !ledState;
+      for (int i = 0; i < numGroup1LEDs; i++) {
+        digitalWrite(group1LEDs[i], ledState ? HIGH : LOW);
+      }
     }
   }
 }
 
-
 void LeftButton() {
-  mp3.setVolume(150);
+  mp3.setVolume(20);  // JQ6500 max is 30, not 150
   mp3.playFileByIndexNumber(2);
   digitalWrite(blueLED, HIGH);
+  blinkActive = false;  // only steady LED
 }
 
 void RightButton() {
-  mp3.setVolume(140);
+  mp3.setVolume(20);
   mp3.playFileByIndexNumber(1);
-  digitalWrite(group1LEDs, HIGH);
-  delay(20);
-  digitalWrite(group1LEDs, LOW);
-  
+  blinkActive = true;  // start blinking LEDs
 }
 
 void StopAll() {
   digitalWrite(blueLED, LOW);
-  digitalWrite(group1LEDs, LOW);
+  for (int i = 0; i < numGroup1LEDs; i++) {
+    digitalWrite(group1LEDs[i], LOW);
+  }
+  blinkActive = false;
 }
